@@ -1,0 +1,17 @@
+workflows:
+  android-build:
+    name: Android Build
+
+    working_directory: app
+
+    environment:
+      node: 20
+
+    scripts:
+      - npm install
+      - npx expo prebuild --platform android
+      - cd android && chmod +x gradlew && ./gradlew assembleRelease
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
