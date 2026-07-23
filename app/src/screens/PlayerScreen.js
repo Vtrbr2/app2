@@ -73,9 +73,7 @@ export default function PlayerScreen() {
     categoria, 
     slug, 
     tipo = 'filme', 
-    titulo = 'TEDFLIX',
-    isLive = false,
-    embeds = []
+    titulo = 'TEDFLIX'
   } = route.params || {};
 
   const [manifestUri, setManifestUri] = useState(null);
@@ -99,12 +97,11 @@ export default function PlayerScreen() {
   const arquivoManifestoRef = useRef(null);
   const requisicaoRef = useRef(0);
 
-  const endpoint = useMemo(() => {
-    if (isLive) return null;
-    return tipo === 'episodio'
+  const endpoint = useMemo(() => (
+    tipo === 'episodio'
       ? `${CONFIG.STREAM_API}/episodio/${categoria}/${slug}`
-      : `${CONFIG.STREAM_API}/filme-player/${categoria}/${slug}`;
-  }, [categoria, slug, tipo, isLive]);
+      : `${CONFIG.STREAM_API}/filme-player/${categoria}/${slug}`
+  ), [categoria, slug, tipo]);
 
   const limparManifestoLocal = useCallback(async () => {
     const arquivo = arquivoManifestoRef.current;
@@ -131,27 +128,7 @@ export default function PlayerScreen() {
 
     await limparManifestoLocal();
 
-    if (isLive) {
-      // Para canais ao vivo, tentamos usar o primeiro embed que pareça um stream direto
-      // ou o próprio embed_url se o player suportar (Webview seria necessário para iframes)
-      const embed = embeds[0]?.embed_url;
-      if (!embed) {
-        setErro('Nenhuma fonte de transmissão disponível para este canal.');
-        setPreparando(false);
-        return;
-      }
-      
-      // Se for um link direto .m3u8, usamos direto. Se não, informamos que precisa de suporte.
-      if (embed.includes('.m3u8')) {
-        setManifestUri(embed);
-        setPreparando(false);
-      } else {
-        // Fallback: Tentamos carregar como se fosse um stream direto (alguns provedores ocultam a extensão)
-        setManifestUri(embed);
-        setPreparando(false);
-      }
-      return;
-    }
+    
 
     if (!categoria || !slug) {
       setPreparando(false);
@@ -225,7 +202,7 @@ export default function PlayerScreen() {
   };
 
   const avancar = (segundos) => {
-    if (isLive || !duracao) return;
+    if (!duracao) return;
     const proximoTempo = Math.max(0, Math.min(duracao, tempoAtual + segundos));
     videoRef.current?.seek(proximoTempo);
     setTempoAtual(proximoTempo);
@@ -233,7 +210,7 @@ export default function PlayerScreen() {
   };
 
   const buscarTempo = (posicaoX) => {
-    if (isLive || !duracao || !larguraProgresso) return;
+    if (!duracao || !larguraProgresso) return;
     const proporcao = Math.max(0, Math.min(1, posicaoX / larguraProgresso));
     const proximoTempo = proporcao * duracao;
     videoRef.current?.seek(proximoTempo);
@@ -271,7 +248,7 @@ export default function PlayerScreen() {
           source={{
             uri: manifestUri,
             type: 'm3u8',
-            headers: isLive ? HEADERS_LIVE : HEADERS_CDN,
+            headers: HEADERS_CDN,
           }}
           style={styles.video}
           paused={pausado}
@@ -284,7 +261,7 @@ export default function PlayerScreen() {
             setBufferizando(true);
           }}
           onLoad={(dados) => {
-            setDuracao(isLive ? 0 : dados?.duration || 0);
+            setDuracao(dados?.duration || 0);
             setPreparando(false);
             setBufferizando(false);
             setPronto(true);
@@ -312,11 +289,6 @@ export default function PlayerScreen() {
               <MaterialCommunityIcons name="arrow-left" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.titulo} numberOfLines={1}>{titulo}</Text>
-            {isLive && (
-              <View style={styles.badgeLive}>
-                <Text style={styles.badgeText}>AO VIVO</Text>
-              </View>
-            )}
             <TouchableOpacity style={styles.botaoTopo} onPress={() => setTelaCheia(!telaCheia)}>
               <MaterialCommunityIcons name={telaCheia ? 'fullscreen-exit' : 'fullscreen'} size={23} color="#FFFFFF" />
             </TouchableOpacity>
@@ -324,41 +296,35 @@ export default function PlayerScreen() {
 
           {!preparando && !bufferizando && pronto && (
             <View style={styles.controlesCentrais}>
-              {!isLive && (
-                <TouchableOpacity style={styles.botaoPular} onPress={() => avancar(-10)}>
-                  <MaterialCommunityIcons name="rewind-10" size={34} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity style={styles.botaoPular} onPress={() => avancar(-10)}>
+                <MaterialCommunityIcons name="rewind-10" size={34} color="#FFFFFF" />
+              </TouchableOpacity>
               <TouchableOpacity style={styles.botaoPlay} onPress={alternarPausa}>
                 <MaterialCommunityIcons name={pausado ? 'play' : 'pause'} size={37} color="#000000" />
               </TouchableOpacity>
-              {!isLive && (
-                <TouchableOpacity style={styles.botaoPular} onPress={() => avancar(10)}>
-                  <MaterialCommunityIcons name="fast-forward-10" size={34} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity style={styles.botaoPular} onPress={() => avancar(10)}>
+                <MaterialCommunityIcons name="fast-forward-10" size={34} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
           )}
 
           {!preparando && pronto && (
             <View style={styles.barraInferior}>
-              {!isLive && (
-                <View style={styles.areaProgresso} onLayout={(e) => setLarguraProgresso(e.nativeEvent.layout.width)}>
-                  <TouchableWithoutFeedback onPress={(e) => buscarTempo(e.nativeEvent.locationX)}>
-                    <View style={styles.toqueProgresso}>
-                      <View style={styles.trilhaProgresso}>
-                        <View style={[styles.progressoPreenchido, { width: `${porcentagemProgresso}%` }]} />
-                      </View>
+              <View style={styles.areaProgresso} onLayout={(e) => setLarguraProgresso(e.nativeEvent.layout.width)}>
+                <TouchableWithoutFeedback onPress={(e) => buscarTempo(e.nativeEvent.locationX)}>
+                  <View style={styles.toqueProgresso}>
+                    <View style={styles.trilhaProgresso}>
+                      <View style={[styles.progressoPreenchido, { width: `${porcentagemProgresso}%` }]} />
                     </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              )}
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
 
               <View style={styles.linhaFerramentas}>
                 <TouchableOpacity style={styles.botaoFerramenta} onPress={alternarPausa}>
                   <MaterialCommunityIcons name={pausado ? 'play' : 'pause'} size={21} color="#FFFFFF" />
                 </TouchableOpacity>
-                {!isLive && <Text style={styles.tempo}>{formatTime(tempoAtual)} / {formatTime(duracao)}</Text>}
+                <Text style={styles.tempo}>{formatTime(tempoAtual)} / {formatTime(duracao)}</Text>
                 
                 <View style={styles.volumeWrap}>
                   <TouchableOpacity style={styles.botaoFerramenta} onPress={() => setMudo(!mudo)}>
