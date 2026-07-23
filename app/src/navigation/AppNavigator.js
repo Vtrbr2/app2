@@ -10,6 +10,7 @@ import CategoriaScreen from '../screens/CategoriaScreen';
 import BuscaScreen from '../screens/BuscaScreen';
 import FavoritosScreen from '../screens/FavoritosScreen';
 import CanaisAoVivoScreen from '../screens/CanaisAoVivoScreen';
+import LivePlayerScreen from '../screens/LivePlayerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Busca" component={BuscaScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Favoritos" component={FavoritosScreen} />
         <Stack.Screen name="CanaisAoVivo" component={CanaisAoVivoScreen} />
+        <Stack.Screen name="LivePlayer" component={LivePlayerScreen} options={{ animation: 'fade' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
