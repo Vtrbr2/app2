@@ -154,8 +154,7 @@ export default function HomeScreen() {
                     key={canal.id}
                     style={styles.canalCard}
                     activeOpacity={0.8}
-                    onPress={() => navigation.navigate('Player', { 
-                      isLive: true,
+                    onPress={() => navigation.navigate('LivePlayer', { 
                       canalId: canal.id,
                       titulo: canal.name,
                       embeds: canal.embeds,
