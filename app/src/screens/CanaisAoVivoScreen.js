@@ -64,8 +64,7 @@ export default function CanaisAoVivoScreen() {
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.7}
-      onPress={() => navigation.navigate('Player', { 
-        isLive: true,
+      onPress={() => navigation.navigate('LivePlayer', { 
         canalId: item.id,
         titulo: item.name,
         embeds: item.embeds,
